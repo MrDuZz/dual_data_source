@@ -38,11 +38,38 @@ public class TestController extends BaseController {
     protected JdbcTemplate jdbcTemplate2;
 
 
-    @RequestMapping("test")
-    public List<Map<String, Object>> getCxzdb() {
-//        String sql = "SELECT * FROM sys_user";
+    @RequestMapping("test2")
+    public MessageResult testDual() {
 
-        String sql = "SELECT * FROM person";
+        String sql = "SELECT * from PERSON";
+
+        List<Map<String, Object>> resObj2 = (List<Map<String, Object>>) jdbcTemplate2.execute(
+                new PreparedStatementCreator() {
+                    @Override
+                    public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                        return con.prepareStatement(sql);
+                    }
+                }, new PreparedStatementCallback<List<Map<String, Object>>>() {
+
+                    @Override
+                    public List<Map<String, Object>> doInPreparedStatement(PreparedStatement ps) throws SQLException, DataAccessException {
+                        ps.execute();
+                        ResultSet rs = ps.getResultSet();
+                        while (rs.next()) {
+                            // 这里需要getObject, Oracle得数据类型貌似不能getString
+                            System.out.println("==" + rs.getObject("pname"));
+                        }
+                        return null;
+                    }
+
+                });
+        return success("查询成功");
+    }
+
+    @RequestMapping("test")
+    public MessageResult getCxzdb() {
+
+        String sql = "SELECT * FROM users";
 
         List<Map<String, Object>> resObj = (List<Map<String, Object>>) jdbcTemplate1.execute(
                 new PreparedStatementCreator() {
@@ -57,20 +84,17 @@ public class TestController extends BaseController {
                         ps.execute();
                         ResultSet rs = ps.getResultSet();
                         while (rs.next()) {
-                            System.out.println("==" + rs.getString(1));
-                            System.out.println("==" + rs.getString(2));
-                            System.out.println("==" + rs.getString(3));
-                            System.out.println("==" + rs.getString(4));
-                            System.out.println("==" + rs.getString(5));
+                            System.out.println("==" + rs.getInt("id"));
+                            System.out.println("==" + rs.getString("userId"));
+                            System.out.println("==" + rs.getString("passWord"));
 
-//                    Map<String, Object> map = new HashMap<>();
-//                    map.put("id", rs.getString("id"));
 
                         }
                         return null;
                     }
 
                 });
-        return resObj;
+
+        return success("查询成功");
     }
 }
